@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import os
+import openpyxl
 
 # Diretório onde os arquivos Excel estão localizados
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -25,33 +26,49 @@ else:
     nome_coluna = df_MPS.columns[0]
     df_RH['CS'] = df_RH['CS'].astype(str)
 
-    CS_colaborador = st.sidebar.text_input('Insira o CS do colaborador:')
-    nome_colaborador = sorted(df_RH['Nome Completo'])
-    Nome_filtro = df_RH.loc[df_RH['CS'] == CS_colaborador, 'Nome Completo'].values.tolist()
-    Filtro_nome = st.sidebar.selectbox("Selecione o nome:", Nome_filtro)
-    CS_CORRIGIDO = 'CS' + CS_colaborador
+    opcao_text_input = st.sidebar.radio("O colaborador é terceiro?", options=["Sim", "Não"], index=1)
 
-    cargo_colaborador = df_RH.loc[df_RH['Nome Completo'] == Filtro_nome, 'Descrição Cargo'].values.tolist()
-    Filtro_cargo = st.sidebar.selectbox("Selecione o cargo:", cargo_colaborador)
-
-    if CS_colaborador:
-        Filtro_base = df_RH.loc[df_RH['CS'] == CS_colaborador, 'Unidade'].values.tolist()[0]
-    else:
-        base_colaborador = df_RH['Unidade'].unique()
+    if opcao_text_input == 'Sim':
+        CS_colaborador = st.sidebar.text_input('Insira somente os números do TR do colaborador:', key='cs_text_input')
+        CS_CORRIGIDO = 'CS' + CS_colaborador
+        Filtro_nome = st.sidebar.text_input("Insira o nome:", key='nome_text_input')
+        cargo_colaborador = sorted(df_RH['Descrição Cargo'].unique())
+        Filtro_cargo = st.sidebar.selectbox("Selecione o cargo:", cargo_colaborador)
+        base_colaborador = df_base['RH'].unique()
         Filtro_base = st.sidebar.selectbox("Selecione a base:", base_colaborador)
+        nucleo_colaborador = df_base.loc[df_base['RH'] == Filtro_base, 'NUCLEO'].values.tolist()
+        Filtro_nucleo = st.sidebar.selectbox("Selecione o núcleo:", nucleo_colaborador)
+        Gerencia_colaborador = df_base.loc[df_base['NUCLEO'] == Filtro_nucleo, 'GERENCIA'].values.tolist()
+        Filtro_gerencia = st.sidebar.selectbox("Selecione a gerência:", Gerencia_colaborador)
+        Filtro_Treinamento = st.sidebar.selectbox("Selecione o Treinamento:", Treinamento)
+        Filtro_nivel = st.sidebar.selectbox("Selecione o Treinamento:", Nivel_MPS)
+        base_ur = None
+        if Filtro_base:
+                base_ur = df_base.loc[df_base['RH'] == Filtro_base, 'UR'].iloc[0]
+    else:
+            CS_colaborador = st.sidebar.text_input('Insira o CS do colaborador:')
+            nome_colaborador = sorted(df_RH['Nome Completo'])
+            Nome_filtro = df_RH.loc[df_RH['CS'] == CS_colaborador, 'Nome Completo'].values.tolist()
+            Filtro_nome = st.sidebar.selectbox("Selecione o nome:", Nome_filtro)
+            CS_CORRIGIDO = 'CS' + CS_colaborador
+            cargo_colaborador = df_RH.loc[df_RH['Nome Completo'] == Filtro_nome, 'Descrição Cargo'].values.tolist()
+            Filtro_cargo = st.sidebar.selectbox("Selecione o cargo:", cargo_colaborador)
 
-    base_ur = None
-    if Filtro_base:
-        base_ur = df_base.loc[df_base['RH'] == Filtro_base, 'UR'].iloc[0]
+            if CS_colaborador:
+                Filtro_base = df_RH.loc[df_RH['CS'] == CS_colaborador, 'Unidade'].values.tolist()[0]
+            else:
+                base_colaborador = df_RH['Unidade'].unique()
+                Filtro_base = st.sidebar.selectbox("Selecione a base:", base_colaborador)
 
-    nucleo_colaborador = df_base.loc[df_base['RH'] == Filtro_base, 'NUCLEO'].values.tolist()
-    Filtro_nucleo = st.sidebar.selectbox("Selecione o núcleo:", nucleo_colaborador)
-
-    Gerencia_colaborador = df_base.loc[df_base['NUCLEO'] == Filtro_nucleo, 'GERENCIA'].values.tolist()
-    Filtro_gerencia = st.sidebar.selectbox("Selecione a gerência:", Gerencia_colaborador)
-
-    Filtro_Treinamento = st.sidebar.selectbox("Selecione o Treinamento:", Treinamento)
-    Filtro_nivel = st.sidebar.selectbox("Selecione o Treinamento:", Nivel_MPS)
+            base_ur = None
+            if Filtro_base:
+                base_ur = df_base.loc[df_base['RH'] == Filtro_base, 'UR'].iloc[0]
+            nucleo_colaborador = df_base.loc[df_base['RH'] == Filtro_base, 'NUCLEO'].values.tolist()
+            Filtro_nucleo = st.sidebar.selectbox("Selecione o núcleo:", nucleo_colaborador)
+            Gerencia_colaborador = df_base.loc[df_base['NUCLEO'] == Filtro_nucleo, 'GERENCIA'].values.tolist()
+            Filtro_gerencia = st.sidebar.selectbox("Selecione a gerência:", Gerencia_colaborador)
+            Filtro_Treinamento = st.sidebar.selectbox("Selecione o Treinamento:", Treinamento)
+            Filtro_nivel = st.sidebar.selectbox("Selecione o Treinamento:", Nivel_MPS)
 
     if st.sidebar.button('Adicionar nome'):
         colunas_desejadas = ['Usuário - Nome do Usuário', 'Campos Calculados - Nome e Sobrenome do Usuário', 'Usuário - Cargo', 'Treinamento - Título do Treinamento', 'Usuário - Unidade', 'Usuário - Localização', 'Gerência', 'Nível']
